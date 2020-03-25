@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Socket.IO Chat</title>
+    <style>
+        .box {
+            width: 500px;
+            height: 500px;
+            border: 1px solid skyblue;
+            margin-top: 40px;
+            overflow-y: scroll;
+        }
+        .btn button{
+            display: inline-block
+        }
+        input{
+            display: inline-block;
+            width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <div class="list" id="list"></div>
+        <div class="footer"></div>
+    </div>
+    <div class="btn">
+        <input type="text" id="message">
+        <button id="send">发送</button>
+    </div>
+    <!-- 引入服务端js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script> 
+    <script>
+        $(function () {
+            let socket = io.connect('http://127.0.0.1:8088/');
+            let userId = Math.floor(Math.random() * 100);
+            let name = '用户' + userId;
+            // 进入房间
+            socket.emit('enter', {id: userId, name: name});
+            socket.on('enter', function(data) {
+                console.log(data);
+            });
+
+            // 发送信息
+            $('#send').click(() => {
+                let message = $('#message').val();
+                if (message == '') {
+                    alert('请输入消息！');
+                    return false;
+                }
+                socket.emit('message', {name: name, message: message});
+                $('#message').val('');
+            })
+
+            // 接收信息
+            socket.on('message', (data) => {
+                console.log(data);
+                let name = data['name'];
+                let message = data['message'];
+                $('.list').append('<p><b>' + name + ':' +'</>' + message + '</p>');
+                // 让最后一行在最后面
+                $('.footer').get(0).scrollIntoView();
+            });
+
+            // 有用户退出房间
+            socket.on('leave', function (data) {
+                console.log(data);
+            });
+        })
+    </script>
+</body>
+</html>
